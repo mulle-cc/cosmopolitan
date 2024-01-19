@@ -485,7 +485,7 @@ int __vcscanf(int callback(void *),    //
         continue;
       ReportConsumed:
         n_ptr = va_arg(va, int *);
-        *n_ptr = consumed - 1;  // minus lookahead
+        *n_ptr = consumed; 
         continue;
       DecodeString:
         bufsize = !width ? 32 : rawmode ? width : width + 1;
