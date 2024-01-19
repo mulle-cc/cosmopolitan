@@ -3,7 +3,6 @@
 #include "libc/calls/weirdtypes.h"
 #include "libc/runtime/utmpx.h"
 
-#define ACCOUNTING  9
 #define UT_NAMESIZE 32
 #define UT_HOSTSIZE 256
 #define UT_LINESIZE 32
