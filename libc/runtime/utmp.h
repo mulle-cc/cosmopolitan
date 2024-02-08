@@ -3,7 +3,8 @@
 #include "libc/calls/weirdtypes.h"
 #include "libc/runtime/utmpx.h"
 
-#define ACCOUNTING  9
+//  no good for nuthin define breaks expat
+// #define ACCOUNTING  9
 #define UT_NAMESIZE 32
 #define UT_HOSTSIZE 256
 #define UT_LINESIZE 32
