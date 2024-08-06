@@ -17,6 +17,7 @@
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/str/str.h"
+#include "libc/wctype.h"
 
 /**
  * Compares NUL-terminated wide strings case-insensitively.
@@ -29,7 +30,9 @@
 int wcscasecmp(const wchar_t *a, const wchar_t *b) {
   size_t i = 0;
   unsigned x, y;
-  if (a == b) return 0;
-  while ((x = towlower(a[i])) == (y = towlower(b[i])) && b[i]) ++i;
+  if (a == b)
+    return 0;
+  while ((x = towlower(a[i])) == (y = towlower(b[i])) && b[i])
+    ++i;
   return x - y;
 }

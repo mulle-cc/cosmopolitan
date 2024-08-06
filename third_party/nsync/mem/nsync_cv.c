@@ -26,15 +26,11 @@
 #include "third_party/nsync/races.internal.h"
 #include "third_party/nsync/wait_s.internal.h"
 #include "third_party/nsync/waiter.h"
+__static_yoink("nsync_notice");
 
 // once we're paying the cost of nsync we might as well get the benefit
 // of a better pthread_once(), since no other component pulls it in now
 __static_yoink("nsync_run_once");
-
-asm(".ident\t\"\\n\\n\
-*NSYNC (Apache 2.0)\\n\
-Copyright 2016 Google, Inc.\\n\
-https://github.com/google/nsync\"");
 
 /* Initialize *cv. */
 void nsync_cv_init (nsync_cv *cv) {
@@ -197,7 +193,7 @@ static int nsync_cv_wait_with_deadline_impl_ (struct nsync_cv_wait_with_deadline
 			/* A timeout or cancellation occurred, and no wakeup.
 			   Acquire *pcv's spinlock, and confirm.  */
 			c->old_word = nsync_spin_test_and_set_ (&c->pcv->word, CV_SPINLOCK,
-								CV_SPINLOCK, 0);
+								CV_SPINLOCK, 0, c->cv_mu);
 			/* Check that w wasn't removed from the queue after we
 			   checked above, but before we acquired the spinlock.
 			   The test of remove_count confirms that the waiter *w
@@ -230,7 +226,7 @@ static int nsync_cv_wait_with_deadline_impl_ (struct nsync_cv_wait_with_deadline
                            has not yet set the waiting field to zero; a
                            cancellation or timeout may prevent this thread
                            from blocking above on the semaphore.  */
-			attempts = nsync_spin_delay_ (attempts);
+			attempts = pthread_delay_np (c->cv_mu, attempts);
 		}
 	}
 	if (c->cv_mu != NULL && c->w->cv_mu == NULL) { /* waiter was moved to *pmu's queue, and woken. */
@@ -327,7 +323,7 @@ int nsync_cv_wait_with_deadline_generic (nsync_cv *pcv, void *pmu,
 	}
 
 	/* acquire spinlock, set non-empty */
-	c.old_word = nsync_spin_test_and_set_ (&pcv->word, CV_SPINLOCK, CV_SPINLOCK|CV_NON_EMPTY, 0);
+	c.old_word = nsync_spin_test_and_set_ (&pcv->word, CV_SPINLOCK, CV_SPINLOCK|CV_NON_EMPTY, 0, pmu);
 	dll_make_last (&pcv->waiters, &c.w->nw.q);
 	c.remove_count = ATM_LOAD (&c.w->remove_count);
 	/* Release the spin lock. */
@@ -359,7 +355,7 @@ void nsync_cv_signal (nsync_cv *pcv) {
 		int all_readers = 0;
 		/* acquire spinlock */
 		uint32_t old_word = nsync_spin_test_and_set_ (&pcv->word, CV_SPINLOCK,
-							      CV_SPINLOCK, 0);
+							      CV_SPINLOCK, 0, pcv);
 		if (!dll_is_empty (pcv->waiters)) {
 			/* Point to first waiter that enqueued itself, and
 			   detach it from all others.  */
@@ -442,7 +438,7 @@ void nsync_cv_broadcast (nsync_cv *pcv) {
 		int all_readers;
 		struct Dll *to_wake_list = NULL;   /* waiters that we will wake */
 		/* acquire spinlock */
-		nsync_spin_test_and_set_ (&pcv->word, CV_SPINLOCK, CV_SPINLOCK, 0);
+		nsync_spin_test_and_set_ (&pcv->word, CV_SPINLOCK, CV_SPINLOCK, 0, pcv);
 		p = NULL;
 		next = NULL;
 		all_readers = 1;
@@ -501,7 +497,7 @@ static nsync_time cv_ready_time (void *v, struct nsync_waiter_s *nw) {
 static int cv_enqueue (void *v, struct nsync_waiter_s *nw) {
 	nsync_cv *pcv = (nsync_cv *) v;
 	/* acquire spinlock */
-	uint32_t old_word = nsync_spin_test_and_set_ (&pcv->word, CV_SPINLOCK, CV_SPINLOCK, 0);
+	uint32_t old_word = nsync_spin_test_and_set_ (&pcv->word, CV_SPINLOCK, CV_SPINLOCK, 0, pcv);
 	dll_make_last (&pcv->waiters, &nw->q);
 	ATM_STORE (&nw->waiting, 1);
 	/* Release spinlock. */
@@ -513,7 +509,7 @@ static int cv_dequeue (void *v, struct nsync_waiter_s *nw) {
 	nsync_cv *pcv = (nsync_cv *) v;
 	int was_queued = 0;
 	/* acquire spinlock */
-	uint32_t old_word = nsync_spin_test_and_set_ (&pcv->word, CV_SPINLOCK, CV_SPINLOCK, 0);
+	uint32_t old_word = nsync_spin_test_and_set_ (&pcv->word, CV_SPINLOCK, CV_SPINLOCK, 0, pcv);
 	if (ATM_LOAD_ACQ (&nw->waiting) != 0) {
 		dll_remove (&pcv->waiters, &nw->q);
 		ATM_STORE (&nw->waiting, 0);

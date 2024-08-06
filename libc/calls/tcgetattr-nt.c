@@ -18,10 +18,10 @@
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/assert.h"
 #include "libc/calls/internal.h"
-#include "libc/calls/struct/fd.internal.h"
+#include "libc/intrin/fds.h"
 #include "libc/calls/struct/termios.h"
 #include "libc/calls/syscall-nt.internal.h"
-#include "libc/intrin/nomultics.internal.h"
+#include "libc/intrin/nomultics.h"
 #include "libc/nt/console.h"
 #include "libc/nt/enum/consolemodeflags.h"
 #include "libc/str/str.h"
@@ -35,8 +35,10 @@ textwindows int tcgetattr_nt(int fd, struct termios *tio) {
   uint32_t inmode, outmode;
 
   // validate file descriptor
-  if (!__isfdopen(fd)) return ebadf();
-  if (!__isfdkind(fd, kFdConsole)) return enotty();
+  if (!__isfdopen(fd))
+    return ebadf();
+  if (!__isfdkind(fd, kFdConsole))
+    return enotty();
 
   // then completely ignore it
   hInput = GetConsoleInputHandle();

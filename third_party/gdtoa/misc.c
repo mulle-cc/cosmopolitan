@@ -30,7 +30,7 @@
 │                                                                              │
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/calls/calls.h"
-#include "libc/macros.internal.h"
+#include "libc/macros.h"
 #include "libc/runtime/runtime.h"
 #include "libc/thread/thread.h"
 #include "libc/thread/tls.h"
@@ -98,7 +98,7 @@ __gdtoa_Bclear(void)
 	__gdtoa_unlock();
 }
 
-__attribute__((__constructor__)) static void
+__attribute__((__constructor__(60))) static void
 __gdtoa_Binit(void)
 {
 	__gdtoa_initlock();

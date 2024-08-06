@@ -14,6 +14,7 @@
 #include "libc/calls/struct/sigaction.h"
 #include "libc/calls/struct/sigset.h"
 #include "libc/calls/termios.h"
+#include "libc/ctype.h"
 #include "libc/errno.h"
 #include "libc/log/check.h"
 #include "libc/log/log.h"
@@ -198,7 +199,8 @@ int main(int argc, char *argv[]) {
     dprintf(outfd, "%`'.*s (got %d) ", n, code, n);
     if (iscntrl(code[0]) && !code[1]) {
       dprintf(outfd, "is CTRL-%c a.k.a. ^%c\r\n", CTRL(code[0]), CTRL(code[0]));
-      if (code[0] == CTRL('C') || code[0] == CTRL('D')) break;
+      if (code[0] == CTRL('C') || code[0] == CTRL('D'))
+        break;
     } else if (startswith(code, "\e[") && endswith(code, "R")) {
       yn = 1, xn = 1;
       sscanf(code, "\e[%d;%dR", &yn, &xn);

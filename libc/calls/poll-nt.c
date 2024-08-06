@@ -27,8 +27,8 @@
 #include "libc/dce.h"
 #include "libc/errno.h"
 #include "libc/intrin/atomic.h"
-#include "libc/intrin/strace.internal.h"
-#include "libc/macros.internal.h"
+#include "libc/intrin/strace.h"
+#include "libc/macros.h"
 #include "libc/mem/mem.h"
 #include "libc/nt/console.h"
 #include "libc/nt/enum/filetype.h"
@@ -81,7 +81,8 @@ static textwindows int sys_poll_nt_impl(struct pollfd *fds, uint64_t nfds,
   // we might need to spawn threads and open pipes
   __fds_lock();
   for (gotinvals = rc = sn = pn = i = 0; i < nfds; ++i) {
-    if (fds[i].fd < 0) continue;
+    if (fds[i].fd < 0)
+      continue;
     if (__isfdopen(fds[i].fd)) {
       if (__isfdkind(fds[i].fd, kFdSocket)) {
         if (sn < ARRAYLEN(sockfds)) {

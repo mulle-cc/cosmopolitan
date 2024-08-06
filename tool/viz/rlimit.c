@@ -10,10 +10,10 @@
 #include "libc/calls/struct/rlimit.h"
 #include "libc/calls/calls.h"
 #include "libc/errno.h"
-#include "libc/intrin/describeflags.internal.h"
-#include "libc/intrin/strace.internal.h"
+#include "libc/intrin/describeflags.h"
+#include "libc/intrin/strace.h"
 #include "libc/log/color.internal.h"
-#include "libc/macros.internal.h"
+#include "libc/macros.h"
 #include "libc/runtime/runtime.h"
 #include "libc/stdio/stdio.h"
 #include "libc/str/str.h"
@@ -31,7 +31,8 @@
 static void SetLimit(int resource, uint64_t soft, uint64_t hard) {
   struct rlimit old;
   struct rlimit lim = {soft, hard};
-  if (resource == 127) return;
+  if (resource == 127)
+    return;
   if (setrlimit(resource, &lim) == -1) {
     if (!getrlimit(resource, &old)) {
       lim.rlim_max = MIN(hard, old.rlim_max);
@@ -42,7 +43,7 @@ static void SetLimit(int resource, uint64_t soft, uint64_t hard) {
         return;
       }
     }
-    fprintf(stderr, "ERROR: SETRLIMIT(%s, %,ld, %,ld) FAILED %m%n",
+    fprintf(stderr, "ERROR: SETRLIMIT(%s, %,ld, %,ld) FAILED %m\n",
             DescribeRlimitName(resource), soft, hard);
     exit(1);
   }

@@ -20,10 +20,9 @@
 #include "libc/calls/struct/termios.internal.h"
 #include "libc/calls/ttydefaults.h"
 #include "libc/dce.h"
-#include "libc/intrin/asan.internal.h"
-#include "libc/intrin/describeflags.internal.h"
+#include "libc/intrin/describeflags.h"
 #include "libc/intrin/kprintf.h"
-#include "libc/macros.internal.h"
+#include "libc/macros.h"
 #include "libc/sysv/consts/termios.h"
 
 #define N 1024
@@ -35,9 +34,9 @@ const char *(DescribeTermios)(char buf[N], ssize_t rc,
   int o = 0;
   char b128[128];
 
-  if (!tio) return "NULL";
-  if ((!IsAsan() && kisdangerous(tio)) ||
-      (IsAsan() && !__asan_is_valid(tio, sizeof(*tio)))) {
+  if (!tio)
+    return "NULL";
+  if (kisdangerous(tio)) {
     ksnprintf(buf, N, "%p", tio);
     return buf;
   }

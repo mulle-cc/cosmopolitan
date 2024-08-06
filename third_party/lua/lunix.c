@@ -46,16 +46,15 @@
 #include "libc/fmt/magnumstrs.internal.h"
 #include "libc/intrin/atomic.h"
 #include "libc/serialize.h"
-#include "libc/intrin/strace.internal.h"
+#include "libc/intrin/strace.h"
 #include "libc/limits.h"
 #include "libc/log/log.h"
-#include "libc/macros.internal.h"
+#include "libc/macros.h"
 #include "libc/mem/mem.h"
 #include "libc/nt/process.h"
 #include "libc/nt/runtime.h"
 #include "libc/nt/synchronization.h"
 #include "libc/runtime/clktck.h"
-#include "libc/runtime/memtrack.internal.h"
 #include "libc/runtime/runtime.h"
 #include "libc/runtime/sysconf.h"
 #include "libc/sock/sock.h"
@@ -103,8 +102,7 @@
 #include "libc/sysv/consts/w.h"
 #include "libc/sysv/errfuns.h"
 #include "libc/thread/thread.h"
-#include "libc/time/struct/tm.h"
-#include "libc/time/time.h"
+#include "libc/time.h"
 #include "libc/x/x.h"
 #include "third_party/lua/cosmo.h"
 #include "third_party/lua/lauxlib.h"
@@ -128,12 +126,13 @@ static void *LuaRealloc(lua_State *L, void *p, size_t n) {
   if ((p2 = realloc(p, n))) {
     return p2;
   }
-  if (IsLegalSize(n)) {
+  if (n < 0x100000000000) {
     WARNF("reacting to malloc() failure by running lua garbage collector...");
     luaC_fullgc(L, 1);
-    p2 = realloc(p, n);
+    if ((p2 = realloc(p, n)))
+      return p2;
   }
-  return p2;
+  return p;
 }
 
 static void *LuaAlloc(lua_State *L, size_t n) {
@@ -1567,7 +1566,10 @@ static int LuaUnixPoll(lua_State *L) {
         fds = fds2;
         ++nfds;
       } else {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuse-after-free"
         free(fds);
+#pragma GCC diagnostic pop
         return LuaUnixSysretErrno(L, "poll", olderr);
       }
     } else {
@@ -2935,7 +2937,7 @@ static int LuaUnixMapshared(lua_State *L) {
     luaL_error(L, "size must be multiple of word size");
     __builtin_unreachable();
   }
-  if (!IsLegalSize(n)) {
+  if (n >= 0x100000000000) {
     luaL_error(L, "map size too big");
     __builtin_unreachable();
   }

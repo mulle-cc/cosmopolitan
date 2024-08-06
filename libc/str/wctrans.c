@@ -17,9 +17,12 @@
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/str/str.h"
+#include "libc/wctype.h"
 
 wctrans_t wctrans(const char *s) {
-  if (!strcmp(s, "toupper")) return (wctrans_t)1;
-  if (!strcmp(s, "tolower")) return (wctrans_t)2;
+  if (!strcmp(s, "toupper"))
+    return (wctrans_t)1;
+  if (!strcmp(s, "tolower"))
+    return (wctrans_t)2;
   return 0;
 }

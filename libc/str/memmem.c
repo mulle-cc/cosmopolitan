@@ -17,7 +17,6 @@
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/dce.h"
-#include "libc/intrin/asan.internal.h"
 #include "libc/intrin/likely.h"
 #include "libc/str/str.h"
 
@@ -32,18 +31,18 @@ typedef char xmm_t __attribute__((__vector_size__(16), __aligned__(16)));
  * @param needlelen is its character count
  * @return pointer to first result or NULL if not found
  */
-void *memmem(const void *haystack, size_t haystacklen,
-                      const void *needle, size_t needlelen) {
+__vex void *memmem(const void *haystack, size_t haystacklen, const void *needle,
+                   size_t needlelen) {
 #if defined(__x86_64__) && !defined(__chibicc__)
   char c;
   xmm_t n;
   const xmm_t *v;
   unsigned i, k, m;
   const char *p, *q, *e;
-  if (IsAsan()) __asan_verify(needle, needlelen);
-  if (IsAsan()) __asan_verify(haystack, haystacklen);
-  if (!needlelen) return (void *)haystack;
-  if (UNLIKELY(needlelen > haystacklen)) return 0;
+  if (!needlelen)
+    return (void *)haystack;
+  if (UNLIKELY(needlelen > haystacklen))
+    return 0;
   q = needle;
   c = *q;
   n = (xmm_t){c, c, c, c, c, c, c, c, c, c, c, c, c, c, c, c};
@@ -57,29 +56,38 @@ void *memmem(const void *haystack, size_t haystacklen,
   for (;;) {
     while (!m) {
       ++v;
-      if ((const char *)v >= e) return 0;
+      if ((const char *)v >= e)
+        return 0;
       m = __builtin_ia32_pmovmskb128(*v == n);
     }
     do {
       k = __builtin_ctzl(m);
       p = (const char *)v + k;
-      if (UNLIKELY(p + needlelen > e)) return 0;
+      if (UNLIKELY(p + needlelen > e))
+        return 0;
       for (i = 1;; ++i) {
-        if (i == needlelen) return (/*unconst*/ char *)p;
-        if (p[i] != q[i]) break;
+        if (i == needlelen)
+          return (/*unconst*/ char *)p;
+        if (p[i] != q[i])
+          break;
       }
       m &= ~(1 << k);
     } while (m);
   }
 #else
   size_t i, j;
-  if (!needlelen) return (void *)haystack;
-  if (needlelen > haystacklen) return 0;
+  if (!needlelen)
+    return (void *)haystack;
+  if (needlelen > haystacklen)
+    return 0;
   for (i = 0; i < haystacklen; ++i) {
     for (j = 0;; ++j) {
-      if (j == needlelen) return (/*unconst*/ char *)haystack + i;
-      if (i + j == haystacklen) break;
-      if (((char *)haystack)[i + j] != ((char *)needle)[j]) break;
+      if (j == needlelen)
+        return (/*unconst*/ char *)haystack + i;
+      if (i + j == haystacklen)
+        break;
+      if (((char *)haystack)[i + j] != ((char *)needle)[j])
+        break;
     }
   }
   return 0;

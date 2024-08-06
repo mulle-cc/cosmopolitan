@@ -16,8 +16,8 @@
 │ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR             │
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
-#include "libc/intrin/describeflags.internal.h"
-#include "libc/macros.internal.h"
+#include "libc/intrin/describeflags.h"
+#include "libc/macros.h"
 #include "libc/nt/enum/fileflagandattributes.h"
 #include "libc/runtime/runtime.h"
 
@@ -51,7 +51,8 @@ static const struct DescribeFlags kFileFlags[] = {
 };
 
 const char *(DescribeNtFileFlagAttr)(char buf[256], uint32_t x) {
-  if (x == -1u) return "-1u";
+  if (x == -1u)
+    return "-1u";
   return DescribeFlags(buf, 256, kFileFlags, ARRAYLEN(kFileFlags), "kNtFile",
                        x);
 }

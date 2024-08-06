@@ -17,23 +17,29 @@
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/calls/calls.h"
-#include "libc/calls/struct/cpuset.h"
 #include "libc/dce.h"
+#include "libc/errno.h"
 #include "libc/nexgen32e/rdtscp.h"
 #include "libc/nexgen32e/x86feature.h"
 #include "libc/nt/struct/processornumber.h"
 #include "libc/nt/synchronization.h"
+#include "libc/sysv/errfuns.h"
 
 int sys_getcpu(unsigned *opt_cpu, unsigned *opt_node, void *tcache);
 
 /**
  * Returns ID of CPU on which thread is currently scheduled.
+ * @return cpu number on success, or -1 w/ errno
  */
 int sched_getcpu(void) {
   if (X86_HAVE(RDTSCP)) {
     unsigned tsc_aux;
     rdtscp(&tsc_aux);
     return TSC_AUX_CORE(tsc_aux);
+  } else if (IsAarch64()) {
+    long tpidr_el0;
+    asm("mrs\t%0,tpidr_el0" : "=r"(tpidr_el0));
+    return tpidr_el0 & 255;
   } else if (IsWindows()) {
     struct NtProcessorNumber pn;
     GetCurrentProcessorNumberEx(&pn);
@@ -41,7 +47,8 @@ int sched_getcpu(void) {
   } else {
     unsigned cpu = 0;
     int rc = sys_getcpu(&cpu, 0, 0);
-    if (rc == -1) return -1;
+    if (rc == -1)
+      return -1;
     return cpu;
   }
 }

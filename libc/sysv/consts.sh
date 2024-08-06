@@ -219,22 +219,24 @@ syscon	mmap	MAP_FILE				0			0			0			0			0			0			0			0			# consensus
 syscon	mmap	MAP_SHARED				1			1			1			1			1			1			1			1			# forced consensus & faked nt
 syscon	mmap	MAP_SHARED_VALIDATE			3			3			1			1			1			1			1			1			# weird linux thing
 syscon	mmap	MAP_PRIVATE				2			2			2			2			2			2			2			2			# forced consensus & faked nt
-syscon	mmap	MAP_STACK				6			6			6			6			6			6			6			6			# our definition
 syscon	mmap	MAP_TYPE				15			15			15			15			15			15			15			15			# mask for type of mapping
 syscon	mmap	MAP_FIXED				0x00000010		0x00000010		0x00000010		0x00000010		0x00000010		0x00000010		0x00000010		0x00000010		# unix consensus; openbsd appears to forbid; faked nt
-syscon	mmap	MAP_FIXED_NOREPLACE			0x08000000		0x08000000		0x00004010		0x00004010		0x08000000		0x08000000		0x08000000		0x08000000     		# handled and defined by cosmo runtime; 0x100000 on linux 4.7+; MAP_FIXED|MAP_EXCL on FreeBSD
+syscon	mmap	MAP_FIXED_NOREPLACE			0x08000000		0x08000000		0x00004000		0x00004000		0x08000000		0x08000000		0x08000000		0x08000000     		# handled and defined by cosmo runtime; 0x100000 on linux 4.7+; MAP_FIXED|MAP_EXCL on FreeBSD
 syscon	mmap	MAP_ANONYMOUS				0x00000020		0x00000020		0x00001000		0x00001000		0x00001000		0x00001000		0x00001000		0x00000020		# bsd consensus; faked nt
-syscon	mmap	MAP_GROWSDOWN				0x00000100		0x00000100		0			0			0			0			0			0			# use MAP_STACK; abstracted by MAP_STACK; may be passed to __sys_mmap() for low-level Linux fiddling
 syscon	mmap	MAP_LOCKED				0x00002000		0x00002000		0			0			0			0			0			0
 syscon	mmap	MAP_NORESERVE				0x00004000		0x00004000		0x00000040		0x00000040		0			0			0x00000040		0			# Linux calls it "reserve"; NT calls it "commit"? which is default?
 syscon	mmap	MAP_POPULATE				0x00008000		0x00008000		0			0			0x00040000		0			0			0			# MAP_PREFAULT_READ on FreeBSD; can avoid madvise(MADV_WILLNEED) on private file mapping
 syscon	mmap	MAP_NONBLOCK				0x00010000		0x00010000		0			0			0			0			0			0
+syscon	mmap	MAP_NOFORK				0			0			0			0			0			0			0			0x10000000		# used on pages internal to our mmap() implemention on windows
 syscon	mmap	MAP_SYNC				0x00080000		0x00080000		0			0			0			0			0			0			# perform synchronous page faults for mapping (Linux 4.15+)
+syscon	mmap	MAP_HUGETLB				0x00040000		-1			-1			-1			-1			-1			-1			-1			# make it inherit across execve()
 syscon	mmap	MAP_INHERIT				-1			-1			-1			-1			-1			-1			0x00000080		-1			# make it inherit across execve()
 syscon	mmap	MAP_HASSEMAPHORE			0			0			0x00000200		0x00000200		0x00000200		0			0x00000200		0			# does it matter on x86?
 syscon	mmap	MAP_NOSYNC				0			0			0			0			0x00000800		0			0			0			# flush to physical media only when necessary rather than gratuitously; be sure to use write() rather than ftruncate() with this!
 syscon	mmap	MAP_CONCEAL				0			0			0			0			0x00020000		0x00008000		0x00008000		0			# omit from core dumps; MAP_NOCORE on FreeBSD
-syscon	mmap	MAP_JIT					0			0			0			0x00000800		0			0			0			0			# omit from core dumps; MAP_NOCORE on FreeBSD
+syscon	mmap	MAP_JIT					0			0			0			0x00000800		0			0			0			0			# allocate region used for just-in-time compilation
+syscon	mmap	MAP_NOCACHE				0			0			0x00000400		0x00000400		0			0			0			0			# don't cache pages for this mapping
+syscon	mmap	MAP_NOEXTEND				0			0			0x00000100		0x00000100		0			0			0			0			# for MAP_FILE, don't change file size
 syscon	compat	MAP_NOCORE				0			0			0			0			0x00020000		0x00008000		0x00008000		0			# use MAP_CONCEAL
 syscon	compat	MAP_ANON				0x00000020		0x00000020		0x00001000		0x00001000		0x00001000		0x00001000		0x00001000		0x00000020		# bsd consensus; faked nt
 syscon	compat	MAP_EXECUTABLE				0x00001000		0x00001000		0			0			0			0			0			0			# ignored
@@ -269,17 +271,18 @@ syscon	madv	MADV_WIPEONFORK				18			18			127			127			127			127			127			127			# T
 syscon	madv	MADV_KEEPONFORK				19			19			127			127			127			127			127			127			# TODO: add support ?
 syscon	madv	MADV_COLD				20			20			127			127			127			127			127			127			# TODO: add support ?
 syscon	madv	MADV_PAGEOUT				21			21			127			127			127			127			127			127			# TODO: add support ?
-syscon	madv	MADV_POPULATE_READ				22			22			127			127			127			127			127			127			# TODO: add support ?
-syscon	madv	MADV_POPULATE_WRITE				23			23			127			127			127			127			127			127			# TODO: add support ?
-syscon	madv	MADV_DONTNEED_LOCKED				24			24			127			127			127			127			127			127			# TODO: add support ?
+syscon	madv	MADV_POPULATE_READ			22			22			127			127			127			127			127			127			# TODO: add support ?
+syscon	madv	MADV_POPULATE_WRITE			23			23			127			127			127			127			127			127			# TODO: add support ?
+syscon	madv	MADV_DONTNEED_LOCKED			24			24			127			127			127			127			127			127			# TODO: add support ?
 syscon	madv	MADV_COLLAPSE				25			25			127			127			127			127			127			127			# TODO: add support ?
 syscon	madv	MADV_DOFORK				11			11			127			127			127			127			127			127			# TODO(jart): what is it?
 syscon	madv	MADV_DONTDUMP				16			16			127			127			127			127			127			127			# see MAP_CONCEAL in OpenBSD; TODO(jart): what is it?
 syscon	madv	MADV_DONTFORK				10			10			127			127			127			127			127			127			# TODO(jart): what is it?
 syscon	madv	MADV_HWPOISON				100			100			127			127			127			127			127			127			# TODO(jart): what is it?
-syscon	madv	MADV_SOFT_OFFLINE				101			101			127			127			127			127			127			127			# TODO: add support ?
+syscon	madv	MADV_SOFT_OFFLINE			101			101			127			127			127			127			127			127			# TODO: add support ?
 syscon	madv	MADV_REMOVE				9			9			127			127			127			127			127			127			# TODO(jart): what is it?
 syscon	fadv	POSIX_FADV_NOREUSE			5			5			127			127			5			127			5			127			# wut
+syscon	madv	MADV_REMOVE				9			9			127			127			127			127			127			127			# TODO(jart): what is it?
 
 #	mmap(), mprotect(), etc.
 #	digital restrictions management for the people
@@ -289,15 +292,7 @@ syscon	mprot	PROT_NONE				0			0			0			0			0			0			0			0			# mmap, mprotect, unix
 syscon	mprot	PROT_READ				1			1			1			1			1			1			1			1			# mmap, mprotect, unix consensus
 syscon	mprot	PROT_WRITE				2			2			2			2			2			2			2			2			# mmap, mprotect, unix consensus
 syscon	mprot	PROT_EXEC				4			4			4			4			4			4			4			4			# mmap, mprotect, unix consensus
-syscon	mprot	PROT_GROWSDOWN				0x01000000		0x01000000		0			0			0			0			0			0			# intended for mprotect; see MAP_GROWSDOWN for mmap() (todo: what was 0x01000000 on nt)
-syscon	mprot	PROT_GROWSUP				0x02000000		0x02000000		0			0			0			0			0			0			# intended for mprotect; see MAP_GROWSDOWN for mmap()
-
-#	mremap() flags
-#	the revolutionary praxis of realloc()
-#
-#	group	name					GNU/Systemd		GNU/Systemd (Aarch64)	XNU's Not UNIX!		MacOS (Arm64)		FreeBSD			OpenBSD			NetBSD			The New Technology	Commentary
-syscon	mremap	MREMAP_MAYMOVE				1			1			1			1			1			1			1			1			# faked non-linux (b/c linux only)
-syscon	mremap	MREMAP_FIXED				2			2			2			2			2			2			2			2			# faked non-linux (b/c linux only)
+syscon	mprot	PROT_GUARD				0			0			0			0			0			0			0			0x100			# mmap, mprotect, unix consensus
 
 #	sigprocmask() flags
 #
@@ -508,6 +503,8 @@ syscon	compat	SA_ONESHOT				0x80000000		0x80000000		4			4			4			4			4			0x800000
 #	The New Technology NT is polyfilled as Linux.
 #	Unsupported values are encoded as 0x80000000.
 #
+#	NOTE: Some of these Windows constants are duplicated in sigcrashsig.c
+#
 #	group	name					GNU/Systemd		GNU/Systemd (Aarch64)	XNU's Not UNIX!		MacOS (Arm64)		FreeBSD			OpenBSD			NetBSD			The New Technology	Commentary
 syscon	sicode	SI_USER					0			0			0x010001		0x010001		0x010001		0			0			0			# sent by kill(2); openbsd defines si_code<=0 as originating from user
 syscon	sicode	SI_QUEUE				-1			-1			0x010002		0x010002		0x010002		-2			-1			-1			# sent by sigqueue(2)
@@ -579,19 +576,19 @@ syscon	clock	CLOCK_REALTIME				0			0			0			0			0			0			0			0			# consensus
 syscon	clock	CLOCK_REALTIME_PRECISE			0			0			0			0			9			0			0			0			#
 syscon	clock	CLOCK_REALTIME_FAST			0			0			0			0			10			0			0			0			#
 syscon	clock	CLOCK_REALTIME_COARSE			5			5			0			0			10			0			0			2			# Linux 2.6.32+; bsd consensus; not available on RHEL5
-syscon	clock	CLOCK_MONOTONIC				1			1			1			6			4			3			3			1			# XNU/NT faked; could move backwards if NTP introduces negative leap second
-syscon	clock	CLOCK_MONOTONIC_PRECISE			1			1			1			6			11			3			3			1			#
-syscon	clock	CLOCK_MONOTONIC_FAST			1			1			1			6			12			3			3			1			#
-syscon	clock	CLOCK_MONOTONIC_COARSE			6			6			1			6			12			3			3			1			# Linux 2.6.32+; bsd consensus; not available on RHEL5
-syscon	clock	CLOCK_MONOTONIC_RAW			4			4			127			4			127			127			127			127			# actually monotonic; not subject to NTP adjustments; Linux 2.6.28+; XNU/NT/FreeBSD/OpenBSD faked; not available on RHEL5
-syscon	clock	CLOCK_PROCESS_CPUTIME_ID		2			2			127			12			15			2			0x40000000		127			# NetBSD lets you bitwise a PID into clockid_t
-syscon	clock	CLOCK_THREAD_CPUTIME_ID			3			3			127			16			14			4			0x20000000		127			#
+syscon	clock	CLOCK_MONOTONIC				1			1			6			6			4			3			3			1			# XNU/NT faked; could move backwards if NTP introduces negative leap second
+syscon	clock	CLOCK_MONOTONIC_PRECISE			1			1			6			6			11			3			3			1			#
+syscon	clock	CLOCK_MONOTONIC_FAST			1			1			6			6			12			3			3			1			#
+syscon	clock	CLOCK_MONOTONIC_COARSE			6			6			5			5			12			3			3			1			# Linux 2.6.32+; bsd consensus; not available on RHEL5
+syscon	clock	CLOCK_MONOTONIC_RAW			4			4			4			4			127			127			127			127			# actually monotonic; not subject to NTP adjustments; Linux 2.6.28+; XNU/NT/FreeBSD/OpenBSD faked; not available on RHEL5
+syscon	clock	CLOCK_PROCESS_CPUTIME_ID		2			2			12			12			15			2			0x40000000		4			# NetBSD lets you bitwise a PID into clockid_t
+syscon	clock	CLOCK_THREAD_CPUTIME_ID			3			3			16			16			14			4			0x20000000		5			#
 syscon	clock	CLOCK_PROF				127			127			127			127			2			127			2			127			#
 syscon	clock	CLOCK_BOOTTIME				7			7			7			127			127			6			127			3			#
 syscon	clock	CLOCK_REALTIME_ALARM			8			8			127			127			127			127			127			127			#
 syscon	clock	CLOCK_BOOTTIME_ALARM			9			9			127			127			127			127			127			127			#
 syscon	clock	CLOCK_TAI				11			11			127			127			127			127			127			127			#
-syscon	clock	CLOCK_UPTIME				127			127			127			127			5			5			127			127			#
+syscon	clock	CLOCK_UPTIME				127			127			8			8			5			5			127			127			#
 syscon	clock	CLOCK_UPTIME_PRECISE			127			127			127			127			7			127			127			127			#
 syscon	clock	CLOCK_UPTIME_FAST			127			127			127			127			8			127			127			127			#
 syscon	clock	CLOCK_SECOND				127			127			127			127			13			127			127			127			#
@@ -1594,7 +1591,7 @@ syscon	nr	__NR_shutdown				0x0030			0x00d2			0x2000086		0x0086			0x0086			0x0086
 syscon	nr	__NR_bind				0x0031			0x00c8			0x2000068		0x0068			0x0068			0x0068			0x068			0xfff
 syscon	nr	__NR_listen				0x0032			0x00c9			0x200006a		0x006a			0x006a			0x006a			0x06a			0xfff
 syscon	nr	__NR_getsockname			0x0033			0x00cc			0x2000020		0x0020			0x0020			0x0020			0x020			0xfff
-syscon	nr	__NR_getpeername			0x0034			0x00cd			0x200001f		0x001f			0x008d			0x001f			0x01f			0xfff
+syscon	nr	__NR_getpeername			0x0034			0x00cd			0x200001f		0x001f			0x001f			0x001f			0x01f			0xfff
 syscon	nr	__NR_socketpair				0x0035			0x00c7			0x2000087		0x0087			0x0087			0x0087			0x087			0xfff
 syscon	nr	__NR_setsockopt				0x0036			0x00d0			0x2000069		0x0069			0x0069			0x0069			0x069			0xfff
 syscon	nr	__NR_getsockopt				0x0037			0x00d1			0x2000076		0x0076			0x0076			0x0076			0x076			0xfff

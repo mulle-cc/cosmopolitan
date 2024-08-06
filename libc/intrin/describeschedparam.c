@@ -18,7 +18,7 @@
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/calls/struct/sched_param.h"
 #include "libc/fmt/itoa.h"
-#include "libc/intrin/describeflags.internal.h"
+#include "libc/intrin/describeflags.h"
 #include "libc/str/str.h"
 
 /**
@@ -26,7 +26,8 @@
  */
 const char *(DescribeSchedParam)(char buf[32], const struct sched_param *x) {
   char *p;
-  if (!x) return "0";
+  if (!x)
+    return "0";
   p = buf;
   *p++ = '{';
   p = FormatInt32(p, x->sched_priority);

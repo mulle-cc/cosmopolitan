@@ -41,7 +41,7 @@
 #include "libc/fmt/conv.h"
 #include "libc/intrin/bswap.h"
 #include "libc/log/bsd.h"
-#include "libc/macros.internal.h"
+#include "libc/macros.h"
 #include "libc/mem/mem.h"
 #include "libc/paths.h"
 #include "libc/runtime/runtime.h"
@@ -50,7 +50,7 @@
 #include "libc/sysv/consts/fileno.h"
 #include "libc/sysv/consts/s.h"
 #include "libc/sysv/consts/termios.h"
-#include "libc/time/time.h"
+#include "libc/time.h"
 #include "third_party/getopt/getopt.internal.h"
 // clang-format off
 
@@ -67,13 +67,10 @@
  * @see https://asciinema.org/
  */
 
-asm(".ident\t\"\\n\\n\
-FreeBSD Script (BSD-3 License)\\n\
-Copyright (c) 2010, 2012 David E. O'Brien\\n\
-Copyright (c) 1980, 1992, 1993\\n\
-\tThe Regents of the University of California.\\n\
-\tAll rights reserved.\"");
-asm(".include \"libc/disclaimer.inc\"");
+__notice(freebsd_script_notice, "\
+FreeBSD Script (BSD-3 License)\n\
+Copyright (c) 2010, 2012 David E. O'Brien\n\
+Copyright (c) 1980, 1992, 1993 The Regents of the University of California");
 
 #define DEF_BUF 65536
 

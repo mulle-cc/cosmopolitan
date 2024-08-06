@@ -5,7 +5,6 @@
 o/$(MODE)/third_party:				\
 	o/$(MODE)/third_party/argon2		\
 	o/$(MODE)/third_party/awk		\
-	o/$(MODE)/third_party/bash		\
 	o/$(MODE)/third_party/bzip2		\
 	o/$(MODE)/third_party/chibicc		\
 	o/$(MODE)/third_party/compiler_rt	\
@@ -41,6 +40,7 @@ o/$(MODE)/third_party:				\
 	o/$(MODE)/third_party/tidy		\
 	o/$(MODE)/third_party/tr		\
 	o/$(MODE)/third_party/tree		\
+	o/$(MODE)/third_party/tz		\
 	o/$(MODE)/third_party/unzip		\
 	o/$(MODE)/third_party/vqsort		\
 	o/$(MODE)/third_party/xed		\

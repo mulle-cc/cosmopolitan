@@ -16,10 +16,11 @@
 │ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR             │
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
+#include "ape/sections.internal.h"
 #include "libc/assert.h"
 #include "libc/fmt/conv.h"
 #include "libc/intrin/weaken.h"
-#include "libc/macros.internal.h"
+#include "libc/macros.h"
 #include "libc/mem/mem.h"
 #include "libc/runtime/runtime.h"
 #include "libc/stdckdint.h"
@@ -31,6 +32,13 @@
 #define GUARANTEE_TERMINATOR 1
 #define INITIAL_CAPACITY     (32 - GUARANTEE_TERMINATOR)
 
+static bool isheap(const void *p) {
+  if (__executable_start <= (const unsigned char *)p &&
+      (const unsigned char *)p < _end)
+    return false;
+  return true;
+}
+
 bool __grow(void *pp, size_t *capacity, size_t itemsize, size_t extra) {
   void **p, *p1, *p2;
   size_t n1, n2;
@@ -39,14 +47,15 @@ bool __grow(void *pp, size_t *capacity, size_t itemsize, size_t extra) {
   p = (void **)pp;
   unassert(itemsize);
   unassert((*p && *capacity) || (!*p && !*capacity));
-  unassert(!_isheap(*p) || ((intptr_t)*p & 15) == 0);
-  p1 = _isheap(*p) ? *p : NULL;
+  unassert(!isheap(*p) || ((intptr_t)*p & 15) == 0);
+  p1 = isheap(*p) ? *p : NULL;
   p2 = NULL;
   n1 = *capacity;
   n2 = (*p ? n1 + (n1 >> 1) : MAX(4, INITIAL_CAPACITY / itemsize)) + extra;
   if (!ckd_mul(&t1, n1, itemsize) && !ckd_mul(&t2, n2, itemsize)) {
     if (_weaken(realloc) && (p2 = _weaken(realloc)(p1, ROUNDUP(t2, 32)))) {
-      if (!p1 && *p) memcpy(p2, *p, t1);
+      if (!p1 && *p)
+        memcpy(p2, *p, t1);
       bzero((char *)p2 + t1, t2 - t1);
       *capacity = n2;
       *p = p2;

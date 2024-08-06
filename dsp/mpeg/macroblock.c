@@ -31,9 +31,8 @@
 #include "dsp/mpeg/video.h"
 #include "libc/log/check.h"
 
-forceinline void plm_video_process_macroblock(plm_video_t *self,
-                                              uint8_t *restrict d,
-                                              uint8_t *restrict s, int motion_h,
+forceinline void plm_video_process_macroblock(plm_video_t *self, uint8_t *d,
+                                              uint8_t *s, int motion_h,
                                               int motion_v, bool interpolate,
                                               unsigned BW) {
   unsigned si, di, max_address;
@@ -46,7 +45,8 @@ forceinline void plm_video_process_macroblock(plm_video_t *self,
   si = ((self->mb_row * BW) + vp) * dw + (self->mb_col * BW) + hp;
   di = (self->mb_row * dw + self->mb_col) * BW;
   max_address = (dw * (self->mb_height * BW - BW + 1) - BW);
-  if (si > max_address || di > max_address) return;
+  if (si > max_address || di > max_address)
+    return;
   d += di;
   s += si;
   switch (((interpolate << 2) | (odd_h << 1) | (odd_v)) & 7) {
@@ -154,17 +154,17 @@ forceinline void plm_video_process_macroblock(plm_video_t *self,
   }
 }
 
-void plm_video_process_macroblock_8(plm_video_t *self, uint8_t *restrict d,
-                                    uint8_t *restrict s, int motion_h,
-                                    int motion_v, bool interpolate) {
+void plm_video_process_macroblock_8(plm_video_t *self, uint8_t *d, uint8_t *s,
+                                    int motion_h, int motion_v,
+                                    bool interpolate) {
   DCHECK_ALIGNED(8, d);
   DCHECK_ALIGNED(8, s);
   plm_video_process_macroblock(self, d, s, motion_h, motion_v, interpolate, 8);
 }
 
-void plm_video_process_macroblock_16(plm_video_t *self, uint8_t *restrict d,
-                                     uint8_t *restrict s, int motion_h,
-                                     int motion_v, bool interpolate) {
+void plm_video_process_macroblock_16(plm_video_t *self, uint8_t *d, uint8_t *s,
+                                     int motion_h, int motion_v,
+                                     bool interpolate) {
   DCHECK_ALIGNED(16, d);
   DCHECK_ALIGNED(16, s);
   plm_video_process_macroblock(self, d, s, motion_h, motion_v, interpolate, 16);

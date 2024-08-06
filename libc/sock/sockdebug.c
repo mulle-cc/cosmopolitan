@@ -18,8 +18,8 @@
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/errno.h"
 #include "libc/fmt/itoa.h"
-#include "libc/intrin/describeflags.internal.h"
-#include "libc/macros.internal.h"
+#include "libc/intrin/describeflags.h"
+#include "libc/macros.h"
 #include "libc/sock/sock.h"
 #include "libc/sock/struct/sockaddr.h"
 #include "libc/sock/struct/sockaddr6.h"
@@ -64,7 +64,8 @@ const char *(DescribeSockaddr)(char buf[128], const struct sockaddr *sa,
       unix = (const struct sockaddr_un *)sa;
       n = strnlen(unix->sun_path, sizeof(unix->sun_path));
       n = MIN(n, 128 - 1);
-      if (n) memcpy(buf, unix->sun_path, n);
+      if (n)
+        memcpy(buf, unix->sun_path, n);
       buf[n] = 0;
     }
   }

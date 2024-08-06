@@ -17,7 +17,7 @@
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/calls/internal.h"
-#include "libc/calls/struct/fd.internal.h"
+#include "libc/intrin/fds.h"
 #include "libc/calls/struct/iovec.h"
 #include "libc/calls/struct/sigset.internal.h"
 #include "libc/nt/struct/iovec.h"
@@ -49,7 +49,8 @@ static textwindows int sys_send_nt_start(int64_t handle,
 
 textwindows ssize_t sys_send_nt(int fd, const struct iovec *iov, size_t iovlen,
                                 uint32_t flags) {
-  if (flags & ~(_MSG_DONTWAIT | _MSG_OOB | _MSG_DONTROUTE)) return einval();
+  if (flags & ~(_MSG_DONTWAIT | _MSG_OOB | _MSG_DONTROUTE))
+    return einval();
   ssize_t rc;
   struct Fd *f = g_fds.p + fd;
   sigset_t m = __sig_block();

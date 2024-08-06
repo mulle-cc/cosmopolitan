@@ -54,21 +54,15 @@
 #
 
 ifeq ($(LANDLOCKMAKE_VERSION),)
-TMPSAFE = $(join $(TMPDIR),$(subst /,_,$@)).tmp
+TMPSAFE = $(join $(TMPDIR)/,$(subst /,_,$@)).tmp
 else
 TMPSAFE = $(TMPDIR)/
 endif
 
 BACKTRACES =								\
+	-fno-schedule-insns2						\
 	-fno-optimize-sibling-calls					\
 	-mno-omit-leaf-frame-pointer
-
-ifneq ($(ARCH), aarch64)
-BACKTRACES += -fno-schedule-insns2
-endif
-
-SANITIZER =								\
-	-fsanitize=address
 
 NO_MAGIC =								\
 	-ffreestanding							\
@@ -93,7 +87,6 @@ DEFAULT_CCFLAGS +=							\
 	-frecord-gcc-switches
 
 DEFAULT_COPTS ?=							\
-	-fno-math-errno							\
 	-fno-ident							\
 	-fno-common							\
 	-fno-gnu-unique							\
@@ -128,6 +121,7 @@ ifeq ($(ARCH), aarch64)
 DEFAULT_COPTS +=							\
 	-ffixed-x18							\
 	-ffixed-x28							\
+	-fsigned-char							\
 	-mno-outline-atomics
 endif
 
@@ -138,20 +132,24 @@ MATHEMATICAL =								\
 DEFAULT_CPPFLAGS +=							\
 	-D_COSMO_SOURCE							\
 	-DMODE='"$(MODE)"'						\
+	-Wno-prio-ctor-dtor						\
+	-Wno-unknown-pragmas						\
 	-nostdinc							\
 	-iquote.							\
 	-isystem libc/isystem
 
 DEFAULT_CFLAGS =							\
-	-std=gnu2x
+	-std=gnu23
 
 DEFAULT_CXXFLAGS =							\
+	-std=gnu++23							\
 	-fno-rtti							\
 	-fno-exceptions							\
 	-fuse-cxa-atexit						\
 	-Wno-int-in-bool-context					\
 	-Wno-narrowing							\
-	-Wno-literal-suffix
+	-Wno-literal-suffix						\
+	-isystem third_party/libcxx
 
 DEFAULT_ASFLAGS =							\
 	-W								\
@@ -163,6 +161,7 @@ DEFAULT_LDFLAGS =							\
 	-nostdlib							\
 	-znorelro							\
 	--gc-sections							\
+	-z noexecstack							\
 	--build-id=none							\
 	--no-dynamic-linker
 
@@ -257,12 +256,12 @@ LD.libs =								\
 	$(LIBS)
 
 COMPILE.c.flags = $(cc.flags) $(copt.flags) $(cpp.flags) $(c.flags)
-COMPILE.cxx.flags = $(cc.flags) $(copt.flags) $(cpp.flags) $(cxx.flags)
+COMPILE.cxx.flags = $(cc.flags) $(copt.flags) $(cxx.flags) $(cpp.flags)
 COMPILE.i.flags = $(cc.flags) $(copt.flags) $(c.flags)
 COMPILE.ii.flags = $(cc.flags) $(copt.flags) $(cxx.flags)
 LINK.flags = $(DEFAULT_LDFLAGS) $(CONFIG_LDFLAGS) $(LDFLAGS)
 OBJECTIFY.c.flags = $(cc.flags) $(o.flags) $(S.flags) $(cpp.flags) $(copt.flags) $(c.flags)
-OBJECTIFY.cxx.flags = $(cc.flags) $(o.flags) $(S.flags) $(cpp.flags) $(copt.flags) $(cxx.flags)
+OBJECTIFY.cxx.flags = $(cc.flags) $(o.flags) $(S.flags) $(cxx.flags) $(cpp.flags) $(copt.flags)
 OBJECTIFY.s.flags = $(ASONLYFLAGS) $(s.flags)
 OBJECTIFY.S.flags = $(cc.flags) $(o.flags) $(S.flags) $(cpp.flags)
 PREPROCESS.flags = -E $(copt.flags) $(cc.flags) $(cpp.flags)

@@ -17,24 +17,28 @@
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/intrin/likely.h"
-#include "libc/str/str.h"
 #include "libc/str/unicode.h"
 #include "libc/str/wcwidth_osx.internal.h"
+#include "libc/wctype.h"
 
 /**
  * Returns cell width of monospace character.
  */
 int wcwidth(wchar_t c) {
   int res;
-  if (LIKELY(32 <= c && c < 127)) return 1;
+  if (LIKELY(32 <= c && c < 127))
+    return 1;
   if (VERY_UNLIKELY((uint32_t)c >= 0x100000)) {
-    if ((uint32_t)c <= 0x10FFFD) return 1;
+    if ((uint32_t)c <= 0x10FFFD)
+      return 1;
     return -1;
   }
   res = _wcwidth_osx(c);
   if (VERY_UNLIKELY(!res)) {
-    if (!c) return 0;
-    if (iswcntrl(c)) return -1;
+    if (!c)
+      return 0;
+    if (iswcntrl(c))
+      return -1;
   }
   return res;
 }

@@ -16,7 +16,7 @@
 │ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR             │
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
-#include "libc/str/str.h"
+#include "libc/wctype.h"
 
 /**
  * Returns nonzero if c is uppercase letter.
@@ -25,7 +25,8 @@ int iswupper(wint_t c) {
   if (c < 0200) {
     return 'A' <= c && c <= 'Z';
   } else {
-    if (towlower(c) != c) return 1;
+    if (towlower(c) != c)
+      return 1;
     switch (c) {
       case 0x03d2:  /* ϒ Greek */
       case 0x03d3:  /* ϓ Greek */

@@ -21,8 +21,7 @@
 #include "libc/calls/struct/iovec.h"
 #include "libc/calls/struct/iovec.internal.h"
 #include "libc/dce.h"
-#include "libc/intrin/asan.internal.h"
-#include "libc/intrin/strace.internal.h"
+#include "libc/intrin/strace.h"
 #include "libc/nt/winsock.h"
 #include "libc/sock/internal.h"
 #include "libc/sock/sock.h"
@@ -60,9 +59,7 @@ ssize_t recvfrom(int fd, void *buf, size_t size, int flags,
   uint32_t addrsize = sizeof(addr);
   BEGIN_CANCELATION_POINT;
 
-  if (IsAsan() && !__asan_is_valid(buf, size)) {
-    rc = efault();
-  } else if (fd < g_fds.n && g_fds.p[fd].kind == kFdZip) {
+  if (fd < g_fds.n && g_fds.p[fd].kind == kFdZip) {
     rc = enotsock();
   } else if (!IsWindows()) {
     rc = sys_recvfrom(fd, buf, size, flags, &addr, &addrsize);
@@ -70,6 +67,9 @@ ssize_t recvfrom(int fd, void *buf, size_t size, int flags,
     if (__isfdkind(fd, kFdSocket)) {
       rc = sys_recvfrom_nt(fd, (struct iovec[]){{buf, size}}, 1, flags, &addr,
                            &addrsize);
+      if (rc != -1 && addrsize == sizeof(addr)) {
+        addrsize = 0;
+      }
     } else if (__isfdkind(fd, kFdFile) && !opt_out_srcaddr) { /* socketpair */
       if (!flags) {
         rc = sys_read_nt(fd, (struct iovec[]){{buf, size}}, 1, -1);
@@ -84,10 +84,14 @@ ssize_t recvfrom(int fd, void *buf, size_t size, int flags,
   }
 
   if (rc != -1) {
-    if (IsBsd()) {
-      __convert_bsd_to_sockaddr(&addr);
+    if (addrsize) {
+      if (IsBsd()) {
+        __convert_bsd_to_sockaddr(&addr);
+      }
+      __write_sockaddr(&addr, opt_out_srcaddr, opt_inout_srcaddrsize);
+    } else {
+      *opt_inout_srcaddrsize = 0;
     }
-    __write_sockaddr(&addr, opt_out_srcaddr, opt_inout_srcaddrsize);
   }
 
   END_CANCELATION_POINT;

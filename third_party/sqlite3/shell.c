@@ -30,6 +30,7 @@
 ** This file contains code to implement the "sqlite" command line
 ** utility for accessing SQLite databases.
 */
+#include "libc/ctype.h"
 #include "libc/dce.h"
 #if (defined(_WIN32) || defined(WIN32)) && !defined(_CRT_SECURE_NO_WARNINGS)
 /* This needs to come before any includes for MSVC compiler */
@@ -309,7 +310,7 @@ static sqlite3_int64 timeOfDay(void){
 }
 
 #if !defined(_WIN32) && !defined(WIN32) && !defined(__minux)
-#include "libc/time/time.h"
+#include "libc/time.h"
 
 /* Saved resource information for the beginning of an operation */
 static struct rusage sBegin;  /* CPU time at start */

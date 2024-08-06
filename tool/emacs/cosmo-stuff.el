@@ -211,11 +211,15 @@
          (dots (file-relative-name root dir))   ;; e.g. "../"
          (file (file-relative-name this root))  ;; e.g. "libc/crc32c.c"
          (name (file-name-sans-extension file)) ;; e.g. "libc/crc32c"
-         (buddy (format "test/%s_test.c" name))
-         (runs (format "o/$m/%s.com%s V=5 TESTARGS=-b" name runsuffix))
-         (buns (format "o/$m/test/%s_test.com%s V=5 TESTARGS=-b" name runsuffix)))
-    (cond ((not (member ext '("c" "cc" "cpp" "s" "S" "rl" "f")))
-           (format "m=%s; make -j12 MODE=$m o/$m/%s"
+         (buddy (let ((c-version (format "test/%s_test.c" name))
+                      (cc-version (format "test/%s_test.cc" name)))
+                  (if (file-exists-p cc-version)
+                      cc-version
+                    c-version)))
+         (runs (format "o/$m/%s%s V=5 TESTARGS=-b" name runsuffix))
+         (buns (format "o/$m/test/%s_test%s V=5 TESTARGS=-b" name runsuffix)))
+    (cond ((not (member ext '("c" "cc" "cpp" "s" "S" "rl" "f" "cu")))
+           (format "m=%s; make -j96 MODE=$m o/$m/%s"
                    mode
                    (directory-file-name
                     (or (file-name-directory
@@ -225,28 +229,28 @@
            (format
             (cosmo-join
              " && "
-             `("m=%s; f=o/$m/%s.com"
-               ,(concat "make -j12 $f MODE=$m")
-               "scp $f $f.dbg win10:; ssh win10 ./%s.com"))
+             `("m=%s; f=o/$m/%s"
+               ,(concat "make -j96 $f MODE=$m")
+               "scp $f $f.dbg win10:; ssh win10 ./%s"))
             mode name (file-name-nondirectory name)))
           ((eq kind 'run-xnu)
            (format
             (cosmo-join
              " && "
-             `("m=%s; f=o/$m/%s.com"
-               ,(concat "make -j12 $f MODE=$m")
+             `("m=%s; f=o/$m/%s"
+               ,(concat "make -j96 $f MODE=$m")
                "scp $f $f.dbg xnu:"
-               "ssh xnu ./%s.com"))
+               "ssh xnu ./%s"))
             mode name (file-name-nondirectory name)))
           ((and (equal suffix "")
                 (cosmo-contains "_test." (buffer-file-name)))
-           (format "m=%s; make -j12 MODE=$m %s"
+           (format "m=%s; make -j96 MODE=$m %s"
                    mode runs))
           ((and (equal suffix "")
                 (file-exists-p (format "%s" buddy)))
            (format (cosmo-join
                     " && "
-                    '("m=%s; n=%s; make -j12 o/$m/$n%s.o MODE=$m"
+                    '("m=%s; n=%s; make -j96 o/$m/$n%s.o MODE=$m"
                       ;; "bloat o/$m/%s.o | head"
                       ;; "nm -C --size o/$m/%s.o | sort -r"
                       "echo"
@@ -257,12 +261,12 @@
            (format
             (cosmo-join
              " && "
-             `("m=%s; f=o/$m/%s.com"
-               ,(concat "make -j12 $f MODE=$m")
+             `("m=%s; f=o/$m/%s"
+               ,(concat "make -j96 $f MODE=$m")
                "build/run ./$f"))
             mode name))
           ((eq kind 'test)
-           (format `"m=%s; f=o/$m/%s.com.ok && make -j12 $f MODE=$m" mode name))
+           (format `"m=%s; f=o/$m/%s.ok && make -j96 $f MODE=$m" mode name))
           ((and (file-regular-p this)
                 (file-executable-p this))
            (format "build/run ./%s" file))
@@ -271,7 +275,7 @@
             (cosmo-join
              " && "
              `("m=%s; f=o/$m/%s%s.o"
-               ,(concat "make -j12 $f MODE=$m")
+               ,(concat "make -j96 $f MODE=$m")
                ;; "nm -C --size $f | sort -r"
                "echo"
                "size -A $f | grep '^[.T]' | grep -v 'debug\\|command.line\\|stack' | sort -rnk2"
@@ -481,7 +485,7 @@
           (error "don't know how to show assembly for non c/c++ source file"))
         (let* ((default-directory root)
                (compile-command
-                (format "make %s -j12 MODE=%s %s %s"
+                (format "make %s -j96 MODE=%s %s %s"
                         (or extra-make-flags "") mode asm-gcc asm-clang)))
           (save-buffer)
           (set-visited-file-modtime (current-time))
@@ -505,7 +509,7 @@
                           "V=1 OVERRIDE_COPTS='-w -fverbose-asm -fsanitize=undefined -fno-sanitize=null -fno-sanitize=alignment -fno-sanitize=pointer-overflow'"))
         ;; ((not (eq 0 (logand 8 arg)))
         ;;  (cosmo--assembly (setq arg (logand (lognot 8)))
-        ;;                   "V=1 OVERRIDE_COPTS='-w -fverbose-asm -fsanitize=address'"))
+        ;;                   "V=1 OVERRIDE_COPTS='-w -fverbose-asm'"))
         (t (cosmo--assembly arg "V=1 OVERRIDE_COPTS='-w ' CPPFLAGS=''"))))
 
 (defun cosmo-assembly-native (arg)
@@ -641,14 +645,14 @@
                (compile (format "sh -c %s" file)))
               ((eq major-mode 'lua-mode)
                (let* ((mode (cosmo--make-mode arg)))
-                 (compile (format "make -j16 MODE=%s o/%s/tool/net/redbean.com && build/run o/%s/tool/net/redbean.com -i %s" mode mode mode file))))
+                 (compile (format "make -j96 MODE=%s o/%s/tool/net/redbean && build/run o/%s/tool/net/redbean -i %s" mode mode mode file))))
               ((and (eq major-mode 'python-mode)
                     (cosmo-startswith "third_party/python/Lib/test/" file))
                (let ((mode (cosmo--make-mode arg)))
-                 (compile (format "make -j12 MODE=%s PYHARNESSARGS=-vv PYTESTARGS=-v o/%s/%s.py.runs"
+                 (compile (format "make -j96 MODE=%s PYHARNESSARGS=-vv PYTESTARGS=-v o/%s/%s.py.runs"
                                   mode mode (file-name-sans-extension file)))))
               ((eq major-mode 'python-mode)
-               (compile (format "python.com %s" file)))
+               (compile (format "python %s" file)))
               ('t
                (error "cosmo-run: unknown major mode")))))))
 
@@ -692,8 +696,10 @@
   (define-key lua-mode-map (kbd "C-c C-r") 'cosmo-run)
   (define-key python-mode-map (kbd "C-c C-r") 'cosmo-run)
   (define-key c-mode-map (kbd "C-c C-s") 'cosmo-run-test)
+  (define-key c++-mode-map (kbd "C-c C-s") 'cosmo-run-test)
   (define-key c-mode-map (kbd "C-c C-_") 'cosmo-run-win7)
-  (define-key c-mode-map (kbd "C-c C-_") 'cosmo-run-win10))
+  (define-key c-mode-map (kbd "C-c C-_") 'cosmo-run-win10)
+  (define-key c++-mode-map (kbd "C-c C-_") 'cosmo-run-win10))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -713,11 +719,11 @@
       (let* ((mode (cosmo--make-mode arg cosmo-dbg-mode))
              (name (file-relative-name this root))
              (next (file-name-sans-extension name))
-             (exec (format "o/%s/%s.com.dbg" mode next))
+             (exec (format "o/%s/%s.dbg" mode next))
              (default-directory root)
              (compile-command (cosmo--compile-command this root nil mode "" "" ".runs")))
         (compile compile-command)
-        (gdb (format "gdb -q -nh -i=mi %s -ex run" exec))))))
+        (gdb (format "gdb -q -i=mi %s -ex run" exec))))))
 
 (progn
   (define-key asm-mode-map (kbd "C-c C-d") 'cosmo-debug)
@@ -759,8 +765,16 @@
                             (concat dots notest ".hookabi.c")
                             (concat dots notest ".h"))))
                     (t
-                     (format "%stest/%s_test.c"
-                             dots (cosmo-file-name-sans-extensions name))))))
+                     (let ((c-version (format "%stest/%s_test.c"
+                                              dots (cosmo-file-name-sans-extensions name)))
+                           (cc-version (format "%stest/%s_test.cc"
+                                               dots (cosmo-file-name-sans-extensions name))))
+                       (if (file-exists-p cc-version)
+                           cc-version
+                         (if (eq major-mode 'c++-mode)
+                             cc-version
+                           c-version)))
+                     ))))
         (when buddy
           (find-file buddy))))))
 
@@ -939,13 +953,27 @@
            "T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]"          ;; time
            "[+.][0-9][0-9][0-9][0-9][0-9][0-9]"         ;; micros
            ":\\([^:]+\\)"                               ;; file
-           ":\\([0-9]+\\)"))                             ;; line
+           ":\\([0-9]+\\)"))                            ;; line
         1 2))
 
 (eval-after-load 'compile
   '(progn
      (add-to-list 'compilation-error-regexp-alist-alist
                   (cons 'cosmo cosmo-compilation-regexps))
+     (add-to-list 'compilation-error-regexp-alist 'cosmo)))
+
+(defvar cosmo-gcc123-compilation-regexps
+  (list (cosmo-join
+         ""
+         '("inlined from '[^']*' at "
+           "\\([^:]+\\)"                ;; file
+           ":\\([0-9]+\\)"))            ;; line
+        1 2))
+
+(eval-after-load 'compile
+  '(progn
+     (add-to-list 'compilation-error-regexp-alist-alist
+                  (cons 'cosmo cosmo-gcc123-compilation-regexps))
      (add-to-list 'compilation-error-regexp-alist 'cosmo)))
 
 (provide 'cosmo-stuff)

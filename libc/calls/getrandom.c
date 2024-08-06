@@ -29,11 +29,10 @@
 #include "libc/calls/syscall_support-sysv.internal.h"
 #include "libc/dce.h"
 #include "libc/errno.h"
-#include "libc/intrin/asan.internal.h"
 #include "libc/intrin/asmflag.h"
-#include "libc/intrin/strace.internal.h"
+#include "libc/intrin/strace.h"
 #include "libc/intrin/weaken.h"
-#include "libc/macros.internal.h"
+#include "libc/macros.h"
 #include "libc/nexgen32e/kcpuids.h"
 #include "libc/nexgen32e/rdtsc.h"
 #include "libc/nexgen32e/vendor.internal.h"
@@ -60,7 +59,8 @@ static bool have_getrandom;
 
 static void GetRandomEntropy(char *p, size_t n) {
   unassert(n <= 256);
-  if (sys_getentropy(p, n)) notpossible;
+  if (sys_getentropy(p, n))
+    notpossible;
 }
 
 static void GetRandomArnd(char *p, size_t n) {
@@ -69,8 +69,10 @@ static void GetRandomArnd(char *p, size_t n) {
   cmd[0] = 1;                      // CTL_KERN
   cmd[1] = IsFreebsd() ? 37 : 81;  // KERN_ARND
   unassert((m = n) <= 256);
-  if (sys_sysctl(cmd, 2, p, &n, 0, 0) == -1) notpossible;
-  if (m != n) notpossible;
+  if (sysctl(cmd, 2, p, &n, 0, 0) == -1)
+    notpossible;
+  if (m != n)
+    notpossible;
 }
 
 static ssize_t GetRandomBsd(char *p, size_t n, void impl(char *, size_t)) {
@@ -103,7 +105,7 @@ static ssize_t GetDevUrandom(char *p, size_t n) {
 ssize_t __getrandom(void *p, size_t n, unsigned f) {
   ssize_t rc;
   if (IsWindows()) {
-    rc = RtlGenRandom(p, n) ? n : __winerr();
+    rc = ProcessPrng(p, n) ? n : __winerr();
   } else if (have_getrandom) {
     if (IsXnu() || IsOpenbsd()) {
       rc = GetRandomBsd(p, n, GetRandomEntropy);
@@ -131,7 +133,7 @@ ssize_t __getrandom(void *p, size_t n, unsigned f) {
  *
  * This random number seed generator obtains information from:
  *
- * - RtlGenRandom() on Windows
+ * - ProcessPrng() on Windows
  * - getentropy() on XNU and OpenBSD
  * - getrandom() on Linux, FreeBSD, and NetBSD
  * - sysctl(KERN_ARND) on older versions of FreeBSD and NetBSD
@@ -179,7 +181,7 @@ ssize_t __getrandom(void *p, size_t n, unsigned f) {
  */
 ssize_t getrandom(void *p, size_t n, unsigned f) {
   ssize_t rc;
-  if ((!p && n) || (IsAsan() && !__asan_is_valid(p, n))) {
+  if ((!p && n)) {
     rc = efault();
   } else if (f & ~(GRND_RANDOM | GRND_NONBLOCK)) {
     rc = einval();
@@ -190,9 +192,11 @@ ssize_t getrandom(void *p, size_t n, unsigned f) {
   return rc;
 }
 
-__attribute__((__constructor__)) static textstartup void getrandom_init(void) {
+__attribute__((__constructor__(30))) static textstartup void getrandom_init(
+    void) {
   int e, rc;
-  if (IsWindows() || IsMetal()) return;
+  if (IsWindows() || IsMetal())
+    return;
   BLOCK_CANCELATION;
   e = errno;
   if (!(rc = sys_getrandom(0, 0, 0))) {

@@ -19,15 +19,15 @@
 #include "libc/assert.h"
 #include "libc/calls/calls.h"
 #include "libc/calls/internal.h"
-#include "libc/calls/struct/fd.internal.h"
+#include "libc/intrin/fds.h"
 #include "libc/calls/struct/stat.h"
 #include "libc/calls/struct/stat.internal.h"
 #include "libc/calls/syscall_support-nt.internal.h"
 #include "libc/fmt/wintime.internal.h"
 #include "libc/intrin/atomic.h"
 #include "libc/intrin/bsr.h"
-#include "libc/intrin/strace.internal.h"
-#include "libc/macros.internal.h"
+#include "libc/intrin/strace.h"
+#include "libc/macros.h"
 #include "libc/mem/alloca.h"
 #include "libc/nt/enum/fileflagandattributes.h"
 #include "libc/nt/enum/fileinfobyhandleclass.h"
@@ -71,7 +71,7 @@ static textwindows long GetSizeOfReparsePoint(int64_t fh) {
       }
     }
     if (x >= 0200) {
-      z += _bsrl(tpenc(x)) >> 3;
+      z += bsrl(tpenc(x)) >> 3;
     }
     ++z;
   }
@@ -97,12 +97,14 @@ textwindows int sys_fstat_nt_special(int kind, struct stat *st) {
 }
 
 textwindows int sys_fstat_nt(int fd, struct stat *st) {
-  if (fd + 0u >= g_fds.n) return ebadf();
+  if (fd + 0u >= g_fds.n)
+    return ebadf();
   switch (g_fds.p[fd].kind) {
     case kFdEmpty:
       return ebadf();
     case kFdConsole:
     case kFdDevNull:
+    case kFdDevRandom:
       return sys_fstat_nt_special(g_fds.p[fd].kind, st);
     case kFdSocket:
       return sys_fstat_nt_socket(g_fds.p[fd].kind, st);
@@ -174,7 +176,8 @@ textwindows int sys_fstat_nt_handle(int64_t handle, const char16_t *path,
       if (S_ISLNK(st.st_mode)) {
         if (!st.st_size) {
           long size = GetSizeOfReparsePoint(handle);
-          if (size == -1) return -1;
+          if (size == -1)
+            return -1;
           st.st_size = size;
         }
       } else {

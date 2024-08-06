@@ -17,6 +17,7 @@
 │ PERFORMANCE OF THIS SOFTWARE.                                                │
 ╚─────────────────────────────────────────────────────────────────────────────*/
 #include "libc/str/str.h"
+#include "libc/wctype.h"
 
 /**
  * Compares NUL-terminated UCS-2 strings case-insensitively w/ limit.
@@ -29,7 +30,9 @@
 int strncasecmp16(const char16_t *a, const char16_t *b, size_t n) {
   int x, y;
   size_t i = 0;
-  if (!n-- || a == b) return 0;
-  while ((x = towlower(a[i])) == (y = towlower(b[i])) && b[i] && i < n) ++i;
+  if (!n-- || a == b)
+    return 0;
+  while ((x = towlower(a[i])) == (y = towlower(b[i])) && b[i] && i < n)
+    ++i;
   return x - y;
 }

@@ -87,8 +87,15 @@ o/$(MODE)/libc/str/windowstimetotimespec.o: private		\
 		CFLAGS +=					\
 			-O2
 
+# we need -O3 because:
+#   we're dividing by constants
+o/$(MODE)/libc/str/iso8601.o					\
+o/$(MODE)/libc/str/iso8601us.o: private				\
+		CFLAGS +=					\
+			-O3
+
 $(LIBC_STR_A_OBJS): private					\
-		COPTS +=					\
+		CFLAGS +=					\
 			-fno-sanitize=all			\
 			-Wframe-larger-than=4096		\
 			-Walloca-larger-than=4096
