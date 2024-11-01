@@ -28,8 +28,8 @@
 #include "libc/sysv/consts/ipproto.h"
 #include "libc/sysv/consts/sock.h"
 
-const char *(DescribeSockaddr)(char buf[128], const struct sockaddr *sa,
-                               size_t sasize) {
+const char *_DescribeSockaddr(char buf[128], const struct sockaddr *sa,
+                              size_t sasize) {
   int e;
   size_t n;
   char *p, ip[72];
@@ -56,7 +56,7 @@ const char *(DescribeSockaddr)(char buf[128], const struct sockaddr *sa,
         p = stpcpy(p, ip);
         *p++ = ']';
         *p++ = ':';
-        p = FormatUint32(p, in6->sin6_port);
+        p = FormatUint32(p, ntohs(in6->sin6_port));
       }
     } else if (sa->sa_family == AF_UNIX &&
                sasize >= sizeof(struct sockaddr_un)) {

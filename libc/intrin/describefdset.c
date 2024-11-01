@@ -26,11 +26,13 @@
 
 #define append(...) o += ksnprintf(buf + o, N - o, __VA_ARGS__)
 
-const char *(DescribeFdSet)(char buf[N], ssize_t rc, int nfds, fd_set *fds) {
+const char *_DescribeFdSet(char buf[N], ssize_t rc, int nfds, fd_set *fds) {
   int o = 0;
 
   if (!fds)
     return "NULL";
+  if (rc == -1)
+    return "n/a";
   if (kisdangerous(fds)) {
     ksnprintf(buf, N, "%p", fds);
     return buf;

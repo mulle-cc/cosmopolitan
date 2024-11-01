@@ -14,6 +14,8 @@ char *GetProgramExecutableName(void) libcesque;
 void unleaf(void) libcesque;
 int __demangle(char *, const char *, size_t) libcesque;
 int __is_mangled(const char *) libcesque;
+bool32 IsLinuxModern(void) libcesque;
+int LoadZipArgs(int *, char ***) libcesque;
 
 COSMOPOLITAN_C_END_
 #endif /* COSMOPOLITAN_LIBC_COSMO_H_ */

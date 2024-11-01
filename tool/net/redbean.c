@@ -31,6 +31,7 @@
 #include "libc/calls/struct/termios.h"
 #include "libc/calls/struct/timespec.h"
 #include "libc/calls/termios.h"
+#include "libc/cosmo.h"
 #include "libc/ctype.h"
 #include "libc/dce.h"
 #include "libc/dos.h"
@@ -71,6 +72,7 @@
 #include "libc/stdio/hex.internal.h"
 #include "libc/stdio/rand.h"
 #include "libc/stdio/stdio.h"
+#include "libc/str/locale.h"
 #include "libc/str/slice.h"
 #include "libc/str/str.h"
 #include "libc/str/strwidth.h"
@@ -129,7 +131,6 @@
 #include "third_party/mbedtls/x509_crt.h"
 #include "third_party/musl/netdb.h"
 #include "third_party/zlib/zlib.h"
-#include "tool/args/args.h"
 #include "tool/build/lib/case.h"
 #include "tool/net/lfinger.h"
 #include "tool/net/lfuncs.h"
@@ -169,7 +170,8 @@ __static_yoink("blink_xnu_aarch64");    // is apple silicon
 #define REDBEAN "redbean"
 #endif
 
-#define VERSION          0x020200
+//                         XXYYZZ
+#define VERSION          0x030000
 #define HASH_LOAD_FACTOR /* 1. / */ 4
 #define READ(F, P, N)    readv(F, &(struct iovec){P, N}, 1)
 #define WRITE(F, P, N)   writev(F, &(struct iovec){P, N}, 1)
@@ -2274,7 +2276,7 @@ static struct Asset *GetAssetZip(const char *path, size_t pathlen) {
   hash = Hash(path, pathlen);
   for (step = 0;; ++step) {
     i = (hash + ((step * (step + 1)) >> 1)) & (assets.n - 1);
-    if (!assets.p[i].hash)
+    if (i >= assets.n || !assets.p || !assets.p[i].hash)
       return NULL;
     if (hash == assets.p[i].hash &&
         pathlen == ZIP_CFILE_NAMESIZE(zmap + assets.p[i].cf) &&
@@ -2545,7 +2547,7 @@ static char *CommitOutput(char *p) {
 
 static char *ServeDefaultErrorPage(char *p, unsigned code, const char *reason,
                                    const char *details) {
-  p = AppendContentType(p, "text/html; charset=ISO-8859-1");
+  p = AppendContentType(p, "text/html; charset=UTF-8");
   reason = FreeLater(EscapeHtml(reason, -1, 0));
   appends(&cpm.outbuf, "\
 <!doctype html>\r\n\
@@ -7427,6 +7429,9 @@ int main(int argc, char *argv[]) {
 #if !IsTiny()
   ShowCrashReports();
 #endif
+
+  // just in case
+  setlocale(LC_ALL, "C.UTF-8");
 
   LoadZipArgs(&argc, &argv);
   RedBean(argc, argv);

@@ -1,5 +1,6 @@
 #ifndef COSMOPOLITAN_LIBC_CALLS_STRUCT_FD_INTERNAL_H_
 #define COSMOPOLITAN_LIBC_CALLS_STRUCT_FD_INTERNAL_H_
+#include "libc/sock/struct/sockaddr.h"
 #include "libc/thread/thread.h"
 COSMOPOLITAN_C_START_
 
@@ -9,7 +10,7 @@ COSMOPOLITAN_C_START_
 #define kFdConsole   4
 #define kFdSerial    5
 #define kFdZip       6
-#define kFdEpoll     7
+#define kFdEpoll     7 /* epoll() deleted on 2024-09-01 */
 #define kFdReserved  8
 #define kFdDevNull   9
 #define kFdDevRandom 10
@@ -27,6 +28,7 @@ struct Cursor {
 struct Fd {
   char kind;
   bool isbound;
+  char connecting;
   unsigned flags;
   unsigned mode;
   long handle;

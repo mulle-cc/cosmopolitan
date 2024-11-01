@@ -92,10 +92,7 @@ DEFAULT_COPTS ?=							\
 	-fno-gnu-unique							\
 	-fstrict-aliasing						\
 	-fstrict-overflow						\
-	-fno-semantic-interposition					\
-	-fno-dwarf2-cfi-asm						\
-	-fno-unwind-tables						\
-	-fno-asynchronous-unwind-tables
+	-fno-semantic-interposition
 
 ifeq ($(ARCH), x86_64)
 # Microsoft says "[a]ny memory below the stack beyond the red zone
@@ -115,14 +112,10 @@ ifeq ($(ARCH), aarch64)
 # - Cosmopolitan Libc uses x28 for thread-local storage because Apple
 #   forbids us from using tpidr_el0 too.
 #
-# - Cosmopolitan currently lacks an implementation of the runtime
-#   libraries needed by the -moutline-atomics flag
-#
 DEFAULT_COPTS +=							\
 	-ffixed-x18							\
 	-ffixed-x28							\
-	-fsigned-char							\
-	-mno-outline-atomics
+	-fsigned-char
 endif
 
 MATHEMATICAL =								\
@@ -143,8 +136,6 @@ DEFAULT_CFLAGS =							\
 
 DEFAULT_CXXFLAGS =							\
 	-std=gnu++23							\
-	-fno-rtti							\
-	-fno-exceptions							\
 	-fuse-cxa-atexit						\
 	-Wno-int-in-bool-context					\
 	-Wno-narrowing							\

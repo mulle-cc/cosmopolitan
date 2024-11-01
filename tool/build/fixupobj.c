@@ -67,8 +67,6 @@ static Elf64_Ehdr *elf;
 static const char *epath;
 static Elf64_Xword symcount;
 
-#include "libc/mem/tinymalloc.inc"
-
 static wontreturn void Die(const char *reason) {
   tinyprint(2, epath, ": ", reason, "\n", NULL);
   exit(1);
@@ -245,7 +243,7 @@ static void CheckPrivilegedCrossReferences(void) {
       if (~shdr->sh_flags & SHF_EXECINSTR)
         continue;  // data reference
       if ((secname = GetElfString(elf, esize, secstrs, shdr->sh_name)) &&
-          strcmp(".privileged", secname)) {
+          !startswith(secname, ".privileged")) {
         tinyprint(2, epath,
                   ": code in .privileged section "
                   "references symbol '",
